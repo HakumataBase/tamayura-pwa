@@ -19,6 +19,18 @@
         enable: true,
       },
     });
+  
+      // まだ権限を取っていなければ、ここでネイティブの許可ダイアログを出す
+      if (!OneSignal.Notifications.permission) {
+        try {
+          await OneSignal.Notifications.requestPermission();
+        } catch (e) {
+          console.error("OneSignal permission error", e);
+        }
+      }
+
+      // 権限の結果に関わらず、本体アプリへ遷移
+      window.location.href = "https://tamayura-yosakoi.com";
   });
 </script>
 
@@ -47,5 +59,6 @@
   </script>
 </body>
 </html>
+
 
 

@@ -29,7 +29,7 @@
       const payload = {
         uid: uid,
         // 許可されなかった場合は null（空データ）を送る
-        subscription_id: subscriptionId || null
+        subscription_id: subscriptionId || ""
       };
 
       try {
@@ -103,34 +103,35 @@
     const button = document.getElementById('openAppButton');
 
     button.addEventListener('click', async () => {
-      const OneSignal = window.OneSignalInstance;
-      const uid = window.PushUserId;
-      let subscriptionId = null;
+  const OneSignal = window.OneSignalInstance;
+  const uid = window.PushUserId;
+  let subscriptionId = null;
 
-      if (OneSignal && OneSignal.Notifications) {
-        try {
-          // クリックイベント内で権限リクエスト
-          await OneSignal.Notifications.requestPermission();
-        } catch (e) {
-          console.error("OneSignal permission error", e);
-        }
+  if (OneSignal && OneSignal.Notifications) {
+    try {
+      // クリックイベント内で権限リクエスト
+      await OneSignal.Notifications.requestPermission();
+    } catch (e) {
+      console.error("OneSignal permission error", e);
+    }
 
-        try {
-          // ユーザー情報取得（許可時のみ subscriptions にIDが入る想定）
-          const user = await OneSignal.User.get();
-          const sub = user?.subscriptions?.[0];
-          subscriptionId = sub?.id || null;
-        } catch (e) {
-          console.error("OneSignal User.get error", e);
-        }
-      }
+    try {
+      // [未検証] v16 では PushSubscription.id に購読IDが入る
+      const subId = OneSignal.User?.PushSubscription?.id;
+      subscriptionId = subId || null;
+    } catch (e) {
+      console.error("OneSignal subscription id error", e);
+    }
+  }
 
-      // 許可/不許可どちらでも BWF に送る（不許可なら subscription_id は null）
-      await postToBubble(uid, subscriptionId);
+  // 許可 / 不許可どちらでも BWF に送る（不許可なら null）
+  await postToBubble(uid, subscriptionId);
 
-      // 本体アプリへ遷移
-      window.location.href = "https://tamayura-yosakoi.com/00_index";
-    });
+  // 本体アプリへ遷移
+  window.location.href = "https://tamayura-yosakoi.com/00_index";
+});
+
   </script>
 </body>
 </html>
+

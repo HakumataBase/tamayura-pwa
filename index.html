@@ -10,23 +10,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#ffffff" />
 
-  <!-- OneSignal のコード（ダッシュボードの「Copy Code」をそのまま貼る） -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "87bdecdd-a6a4-4316-9816-b6861a871cb6",
-      safari_web_id: "web.onesignal.auto.43f3e2d2-3818-43ea-aa50-e469d0e1e106",
-      notifyButton: {
-        enable: true,
-      },
-    });
-  
-      // あとでボタンから使えるようにしておく
+  <!-- OneSignal のコード -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    // クエリパラメータから uid を取得 (?uid=xxxx)
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+
+    // Bubble の Backend WF に結果を送る
+    async function postToBubble(uid, subscriptionId) {
+      if (!uid) return;
+
+      // ★必要に応じて version-test 環境に変更してOK
+      const url = "https://tamayura-yosakoi.com/api/1.1/wf/onesignal_register_result";
+
+      const payload = {
+        uid: uid,
+        // 許可されなかった場合は null（空データ）を送る
+        subscription_id: subscriptionId || null
+      };
+
+      try {
+        await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {
+        console.error("postToBubble error", e);
+      }
+    }
+
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      const uid = getQueryParam("uid");
+
+      await OneSignal.init({
+        appId: "87bdecdd-a6a4-4316-9816-b6861a871cb6",
+        safari_web_id: "web.onesignal.auto.43f3e2d2-3818-43ea-aa50-e469d0e1e106",
+        notifyButton: {
+          enable: true,
+        },
+      });
+
+      // あとでボタン側から使えるようにしておく
       window.OneSignalInstance = OneSignal;
-  });
-</script>
+      window.PushUserId = uid;
+    });
+  </script>
 
   <style>
     html, body {
@@ -66,24 +101,36 @@
 
   <script>
     const button = document.getElementById('openAppButton');
+
     button.addEventListener('click', async () => {
       const OneSignal = window.OneSignalInstance;
+      const uid = window.PushUserId;
+      let subscriptionId = null;
+
       if (OneSignal && OneSignal.Notifications) {
         try {
-          // クリックイベント内で権限リクエスト（ブラウザが受け付けやすい）
+          // クリックイベント内で権限リクエスト
           await OneSignal.Notifications.requestPermission();
         } catch (e) {
           console.error("OneSignal permission error", e);
         }
+
+        try {
+          // ユーザー情報取得（許可時のみ subscriptions にIDが入る想定）
+          const user = await OneSignal.User.get();
+          const sub = user?.subscriptions?.[0];
+          subscriptionId = sub?.id || null;
+        } catch (e) {
+          console.error("OneSignal User.get error", e);
+        }
       }
-      // 許可の成否に関わらず本体アプリへ遷移
+
+      // 許可/不許可どちらでも BWF に送る（不許可なら subscription_id は null）
+      await postToBubble(uid, subscriptionId);
+
+      // 本体アプリへ遷移
       window.location.href = "https://tamayura-yosakoi.com/00_index";
     });
   </script>
 </body>
 </html>
-
-
-
-
-

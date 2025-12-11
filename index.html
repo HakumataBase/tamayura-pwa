@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>TAMAYURA PWA</title>
+
+  <!-- PWAの設定ファイル -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- OneSignal のコード（ダッシュボードの「Copy Code」をそのまま貼る） -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "87bdecdd-a6a4-4316-9816-b6861a871cb6",
+      safari_web_id: "web.onesignal.auto.43f3e2d2-3818-43ea-aa50-e469d0e1e106",
+      notifyButton: {
+        enable: true,
+      },
+    });
+  });
+</script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    iframe {
+      border: none;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- ここで Bubble のアプリを iframe で表示する -->
+  <iframe src="https://tamayura-yosakoi.com"></iframe>
+</body>
+</html>
